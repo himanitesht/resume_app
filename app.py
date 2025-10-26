@@ -276,3 +276,10 @@ elif email_btn:
     Resume:
     {resume_text}
     """, "Application Email Template", "✅ Email generated successfully!")
+
+# ---------------------------
+# 9️⃣ Footer
+# ---------------------------
+st.markdown("---")
+st.caption("🚀 Built by Hima Nitesh Telaprolu")
+st.caption("⚠️ Disclaimer: None of your data is stored or shared. © 2025 Hima Nitesh Telaprolu")
