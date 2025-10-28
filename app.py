@@ -110,12 +110,13 @@ with row1[4]: improve_btn = st.button("🚀 Resume Tips")
 with row1[5]: ats_btn = st.button("📊 ATS Score")
 
 # Row 2
-row2 = st.columns(5)
+row2 = st.columns(6)
 with row2[0]: career_btn = st.button("🎯 Career Role Match")
 with row2[1]: gap_btn = st.button("🧩 Skill Gap Analysis")
 with row2[2]: linkedin_btn = st.button("💼 LinkedIn Summary")
 with row2[3]: project_btn = st.button("🧱 Extract Projects")
 with row2[4]: email_btn = st.button("📧 Application Email")
+with row2[5]: job_btn = st.button("🔎 Find Matching Jobs")
 
 st.divider()
 st.subheader("🧾 Output")
@@ -277,9 +278,62 @@ elif email_btn:
     {resume_text}
     """, "Application Email Template", "✅ Email generated successfully!")
 
+# --- Find Matching Jobs ---
+elif job_btn:
+    if not resume_text:
+        show_toast("⚠️ Please upload a resume first.", "error")
+    else:
+        st.session_state["show_location_input"] = True
+        st.session_state["output_generated"] = False  # track if jobs shown
+
+# Handle location input dynamically
+if st.session_state.get("show_location_input", False) and not st.session_state.get("output_generated", False):
+    user_location = st.text_input("📍 Enter your preferred job location (e.g., Hyderabad, Bangalore, Remote):", "")
+
+    if user_location:
+        # Hide input after submission
+        st.session_state["show_location_input"] = False
+
+        with st.spinner("🔍 Finding matching jobs based on your skills and location..."):
+            # Step 1: Extract relevant roles
+            skill_prompt = f"""
+            You are a job market expert.
+            Based on the resume, extract 5–8 most relevant job titles or roles
+            (e.g., 'Azure DevOps Engineer', 'Backend Developer', 'Data Analyst').
+            Resume:
+            {resume_text}
+            Return roles in a comma-separated list.
+            """
+            roles_text = generate_with_gemini(skill_prompt)
+
+            if not roles_text:
+                show_toast("❌ Could not extract roles.", "error")
+            else:
+                roles = [r.strip() for r in roles_text.split(",") if r.strip()]
+                encoded_location = user_location.replace(" ", "+").replace(",", "%2C")
+
+                # Step 2: Generate inline job links beside each role
+                job_links = []
+                for role in roles:
+                    encoded_role = role.replace(" ", "+")
+                    links = {
+                        "🔗 LinkedIn": f"https://www.linkedin.com/jobs/search/?keywords={encoded_role}&location={encoded_location}",
+                        "💼 Naukri": f"https://www.naukri.com/{encoded_role}-jobs-in-{user_location.replace(' ', '-')}",
+                        "🧭 Indeed": f"https://in.indeed.com/jobs?q={encoded_role}&l={encoded_location}",
+                        "🌐 Google Jobs": f"https://www.google.com/search?q={encoded_role}+jobs+in+{encoded_location}"
+                    }
+
+                    # Inline format
+                    job_text = f"**{role} ({user_location})**: " + " | ".join([f"[{name}]({url})" for name, url in links.items()])
+                    job_links.append(job_text)
+
+                formatted_jobs = "\n\n".join(job_links)
+                show_output("Matching Job Search Links", formatted_jobs)
+                show_toast("✅ Location-based job links generated successfully!", "success")
+                st.session_state["output_generated"] = True
+
 # ---------------------------
 # 9️⃣ Footer
 # ---------------------------
 st.markdown("---")
-st.caption("🚀 Built by Hima Nitesh Telaprolu")
-st.caption("⚠️ Disclaimer: None of your data is stored or shared. © 2025 Hima Nitesh Telaprolu")
+st.caption("🚀 Built by Hima Nitesh Telaprolu | ⚠️ Disclaimer: None of your data is stored or shared.")
