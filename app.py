@@ -4,6 +4,8 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 import PyPDF2
 
+#https://resumeaiapp.streamlit.app/
+#https://share.streamlit.io/
 # ---------------------------
 # 1️⃣ Load environment variables
 # ---------------------------
@@ -164,29 +166,60 @@ if summary_btn:
 elif questions_btn:
     st.session_state["output_text"] = ""
     output_container.empty()
+
     if not resume_text:
         show_toast("⚠️ Please upload a resume first.", "error")
     else:
         with st.spinner("Generating interview Q&A..."):
             prompt = f"""
             You are a technical interviewer.
-            Based on the resume, create 10-15 realistic interview questions with short model answers.
-            Format:
-            Question: <text>
-            Answer: <text>
+            Based on the resume, create 10–15 realistic interview questions with short answers.
+            
+            Strict format:
+            Q: <question>
+            A: <answer>
+
             Resume:
             {resume_text}
             """
+
             output = generate_with_gemini(prompt)
+
         if output:
-            formatted = output.replace("Answer:", "\n**Answer:**")
-            formatted = formatted.replace("Question:", "Question:")
-            qna_blocks = formatted.strip().split("Question:")
-            formatted_with_lines = ""
-            for block in qna_blocks:
-                if block.strip():
-                    formatted_with_lines += "Question:" + block.strip() + "\n\n---\n"
-            show_output("Interview Questions & Answers", formatted_with_lines)
+            final_list = []
+            items = output.split("\n")
+
+            q = ""
+            a = ""
+            count = 0
+
+            for line in items:
+                line = line.strip()
+
+                if line.lower().startswith(("q:", "question")):
+                    # If the previous pair exists, store it
+                    if q and a:
+                        count += 1
+                        final_list.append(f"Question {count}: {q}\n\nAnswer: {a}\n\n---\n")
+                        q, a = "", ""
+
+                    q = line.split(":", 1)[1].strip()
+
+                elif line.lower().startswith(("a:", "answer")):
+                    a = line.split(":", 1)[1].strip()
+
+                # Handle multiline answer
+                elif a:
+                    a += " " + line
+
+            # Save last Q/A
+            if q and a:
+                count += 1
+                final_list.append(f"Question {count}: {q}\n\nAnswer: {a}\n\n---\n")
+
+            formatted_output = "\n".join(final_list)
+
+            show_output("Interview Questions & Answers", formatted_output)
 
 # --- Study Links ---
 elif links_btn:
@@ -336,5 +369,4 @@ if st.session_state.get("show_location_input", False) and not st.session_state.g
 # 9️⃣ Footer
 # ---------------------------
 st.markdown("---")
-st.caption("🚀 Built by Hima Nitesh Telaprolu")
-
+st.caption("🚀 Built by Hima Nitesh Telaprolu | ⚠️ Disclaimer: None of your data is stored or shared.")
