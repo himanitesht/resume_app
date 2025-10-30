@@ -369,4 +369,5 @@ if st.session_state.get("show_location_input", False) and not st.session_state.g
 # 9️⃣ Footer
 # ---------------------------
 st.markdown("---")
-st.caption("🚀 Built by Hima Nitesh Telaprolu | ⚠️ Disclaimer: None of your data is stored or shared.")
+st.caption("🚀 Built with ❤️ by Hima Nitesh Telaprolu")
+
